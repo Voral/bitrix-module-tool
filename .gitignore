@@ -1,0 +1,6 @@
+*.tar.gz
+.directory
+.idea
+/var/
+reports
+.phpunit.result.cache

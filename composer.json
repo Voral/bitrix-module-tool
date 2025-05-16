@@ -1,20 +1,46 @@
 {
-    "name": "voral/bitrix-module-tool",
-    "type": "library",
-    "require": {
-        "php": "^8.1",
-        "voral/version-increment": "^3.0"
-    },
-    "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "Voral\\BitrixModuleTool\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "Alexander Vorobyev",
-            "email": "voral.adm@gmail.com"
-        }
+  "name": "voral/bitrix-module-tool",
+  "type": "library",
+  "require": {
+    "php": "^8.1",
+    "voral/version-increment": "^3.0"
+  },
+  "require-dev": {
+    "friendsofphp/php-cs-fixer": "^3.66.0",
+    "phpunit/phpunit": "^10.5",
+    "php-mock/php-mock-phpunit": "^2.13",
+    "phpstan/phpstan": "^2.1",
+    "phpstan/phpstan-phpunit": "^2.0"
+  },
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Voral\\BitrixModuleTool\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Alexander Vorobyev",
+      "email": "voral.adm@gmail.com"
+    }
+  ],
+  "scripts": {
+    "vi": "php ./vendor/bin/vs-version-increment",
+    "vi:debug": "php ./vendor/bin/vs-version-increment --debug",
+    "test": "php vendor/bin/phpunit --display-warnings",
+    "stan": "vendor/bin/phpstan analyse last_version/lib tests",
+    "fixer": "vendor/bin/php-cs-fixer fix --dry-run --diff",
+    "checkit": [
+      "@fixer",
+      "@stan"
     ]
+  },
+  "scripts-descriptions": {
+    "vi": "Run the version increment tool in automatic mode.",
+    "vi:debug": "Run the version increment tool in debug mode to preview changes without applying them.",
+    "test": "Run PHPUnit tests with warnings displayed.",
+    "stan": "Run PHPStan static analysis on the 'src' and 'tests' directories.",
+    "fixer": "Check coding standards using PHP-CS-Fixer (dry-run mode).",
+    "checkit": "Run all checks, including coding standards and static analysis."
+  }
 }

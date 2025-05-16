@@ -1,0 +1,8 @@
+includes:
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/phpstan/phpstan-phpunit/rules.neon
+
+parameters:
+    excludePaths:
+        - tests
+    level: 1

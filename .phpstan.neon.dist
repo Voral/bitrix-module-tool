@@ -5,4 +5,4 @@ includes:
 parameters:
     excludePaths:
         - tests
-    level: 1
+    level: 10

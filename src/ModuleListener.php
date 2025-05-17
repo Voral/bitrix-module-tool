@@ -4,33 +4,38 @@ declare(strict_types=1);
 
 namespace Voral\BitrixModuleTool;
 
-use http\Exception\RuntimeException;
 use Vasoft\VersionIncrement\Commits\CommitCollection;
 use Vasoft\VersionIncrement\Commits\FileModifyType;
 use Vasoft\VersionIncrement\Commits\ModifiedFile;
 use Vasoft\VersionIncrement\Commits\Section;
-use Vasoft\VersionIncrement\Events\Event;
 use Vasoft\VersionIncrement\Config;
+use Vasoft\VersionIncrement\Contract\EventListenerInterface;
+use Vasoft\VersionIncrement\Events\Event;
 use Vasoft\VersionIncrement\Exceptions\GitCommandException;
 use Vasoft\VersionIncrement\SemanticVersionUpdater;
-use Vasoft\VersionIncrement\Contract\EventListenerInterface;
+use Voral\BitrixModuleTool\Exception\ExtensionException;
+use Voral\BitrixModuleTool\Exception\InvalidPathException;
+use Voral\BitrixModuleTool\Exception\NotAccessibleException;
 
 class ModuleListener implements EventListenerInterface
 {
+    private int $errorCodeDelta = 0;
     private readonly string $projectPath;
     private readonly string $sourcePath;
     private string $destinationPath;
 
     /**
-     * @param Config               $config             Конфигурация version-increment
-     * @param string               $moduleId           Идентификатор модуля
-     * @param string               $sourcePath         Каталог с исходниками модуля
-     * @param string               $destinationPath    Путь для файлов обновлений
-     * @param string               $phpVersion         Версия PHP если необходим контроль в скрипте обновления
-     * @param array<string,string> $modulesVersion     Требующиеся модули и их версии
-     * @param array<string>        $excludeCommitTypes Типы коммитов не включаемые в файлы описания обновлений
-     * @param array<string>        $lang               Символьные коды языков для создания описания обновлений
-     * @param string               $includePhpFile     Путь у php файлу, код которого необходимо включить в скрипт обновления
+     * @param Config        $config             Конфигурация version-increment
+     * @param string        $moduleId           Идентификатор модуля
+     * @param string        $sourcePath         Каталог с исходниками модуля
+     * @param string        $destinationPath    Путь для файлов обновлений
+     * @param string        $phpVersion         Версия PHP если необходим контроль в скрипте обновления
+     * @param array         $modulesVersion     Требующиеся модули и их версии
+     * @param array<string> $excludeCommitTypes Типы коммитов не включаемые в файлы описания обновлений
+     * @param array<string> $lang               Символьные коды языков для создания описания обновлений
+     * @param string        $includePhpFile     Путь у php файлу, код которого необходимо включить в скрипт обновления
+     *
+     * @throws ExtensionException
      */
     public function __construct(
         private readonly Config $config,
@@ -48,6 +53,16 @@ class ModuleListener implements EventListenerInterface
         $this->destinationPath = $this->normalizePath($destinationPath);
     }
 
+    public function configureErrorCodeDelta(int $errorCodeDelta): static
+    {
+        $this->errorCodeDelta = $errorCodeDelta;
+
+        return $this;
+    }
+
+    /**
+     * @throws ExtensionException
+     */
     private function getProjectPath(): string
     {
         $composer = getenv('COMPOSER');
@@ -56,15 +71,15 @@ class ModuleListener implements EventListenerInterface
         } else {
             $path = getcwd();
             if (false === $path) {
-                throw new RuntimeException('Unable to determine current working directory');
+                throw new NotAccessibleException();
             }
         }
-        $path = realpath($path);
-        if (false === $path) {
-            throw new RuntimeException('Unable to determine current working directory');
+        $pathReal = realpath($path);
+        if (false === $pathReal) {
+            throw new InvalidPathException($path);
         }
 
-        return $path . \DIRECTORY_SEPARATOR;
+        return $pathReal . \DIRECTORY_SEPARATOR;
     }
 
     private function normalizePath(string $path): string

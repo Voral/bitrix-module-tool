@@ -19,21 +19,20 @@ use Voral\BitrixModuleTool\Exception\NotAccessibleException;
 
 class ModuleListener implements EventListenerInterface
 {
-    private int $errorCodeDelta = 0;
     private readonly string $projectPath;
     private readonly string $sourcePath;
     private string $destinationPath;
 
     /**
-     * @param Config        $config             Конфигурация version-increment
-     * @param string        $moduleId           Идентификатор модуля
-     * @param string        $sourcePath         Каталог с исходниками модуля
-     * @param string        $destinationPath    Путь для файлов обновлений
-     * @param string        $phpVersion         Версия PHP если необходим контроль в скрипте обновления
-     * @param array         $modulesVersion     Требующиеся модули и их версии
-     * @param array<string> $excludeCommitTypes Типы коммитов не включаемые в файлы описания обновлений
-     * @param array<string> $lang               Символьные коды языков для создания описания обновлений
-     * @param string        $includePhpFile     Путь у php файлу, код которого необходимо включить в скрипт обновления
+     * @param Config               $config             Конфигурация version-increment
+     * @param string               $moduleId           Идентификатор модуля
+     * @param string               $sourcePath         Каталог с исходниками модуля
+     * @param string               $destinationPath    Путь для файлов обновлений
+     * @param string               $phpVersion         Версия PHP если необходим контроль в скрипте обновления
+     * @param array<string,string> $modulesVersion     Требующиеся модули и их версии
+     * @param array<string>        $excludeCommitTypes Типы коммитов не включаемые в файлы описания обновлений
+     * @param array<string>        $lang               Символьные коды языков для создания описания обновлений
+     * @param string               $includePhpFile     Путь у php файлу, код которого необходимо включить в скрипт обновления
      *
      * @throws ExtensionException
      */
@@ -51,13 +50,6 @@ class ModuleListener implements EventListenerInterface
         $this->projectPath = $this->getProjectPath();
         $this->sourcePath = $this->normalizePath($sourcePath);
         $this->destinationPath = $this->normalizePath($destinationPath);
-    }
-
-    public function configureErrorCodeDelta(int $errorCodeDelta): static
-    {
-        $this->errorCodeDelta = $errorCodeDelta;
-
-        return $this;
     }
 
     /**
@@ -128,8 +120,11 @@ class ModuleListener implements EventListenerInterface
 
     public function handle(Event $event): void
     {
-        $lastTag = $event->getData(SemanticVersionUpdater::LAST_VERSION_TAG);
-        if (empty($lastTag) || !is_string($lastTag)) {
+        /** @var string $lastTag */
+        $lastTag = $event->getData(SemanticVersionUpdater::LAST_VERSION_TAG)??'';
+        $lastTag = trim($lastTag);
+
+        if (empty($lastTag)) {
             exit;
         }
         $this->updateModuleVersion($event->version);

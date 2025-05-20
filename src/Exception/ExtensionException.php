@@ -8,6 +8,7 @@ use Vasoft\VersionIncrement\Exceptions\UserException;
 
 abstract class ExtensionException extends UserException
 {
+    /** @var int */
     protected const CODE = 100;
 
     public static int $errorCodeDelta = 0;

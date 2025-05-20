@@ -18,6 +18,11 @@
       "Voral\\BitrixModuleTool\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Voral\\BitrixModuleTool\\Tests\\": "tests/"
+    }
+  },
   "authors": [
     {
       "name": "Alexander Vorobyev",

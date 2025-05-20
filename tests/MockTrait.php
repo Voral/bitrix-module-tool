@@ -33,6 +33,9 @@ trait MockTrait
     protected static int $mockGetCwdCount = 0;
     protected static array $mockGetCwdResult = [];
     protected static string $mockGetCwdFailMessage = '';
+
+    protected static int $mockFileGetContentsCount = 0;
+    protected static array $mockFileGetContentsResult = [];
     private static $failFunction;
 
     protected function initMocks(callable $fail, string $namespace = __NAMESPACE__): void
@@ -72,6 +75,14 @@ trait MockTrait
                     return strlen($content);
                 },
             );
+            $mockFileGetContents = $this->getFunctionMock($namespace, 'file_get_contents');
+            $mockFileGetContents->expects(TestCase::any())->willReturnCallback(
+                static function ($file): false|string {
+                    ++self::$mockFileGetContentsCount;
+
+                    return self::$mockFileGetContentsResult[$file] ?? false;
+                },
+            );
 
             $mockRealPath = $this->getFunctionMock($namespace, 'realpath');
             $mockRealPath->expects(TestCase::any())->willReturnCallback(static function ($path): false|string {
@@ -85,6 +96,12 @@ trait MockTrait
             });
             $this->initialized = true;
         }
+    }
+
+    protected function clearMockFileGetContents(array $result): void
+    {
+        self::$mockFileGetContentsCount = 0;
+        self::$mockFileGetContentsResult = $result;
     }
 
     protected function clearMockGetCwd(array $result, string $failMessage = ''): void

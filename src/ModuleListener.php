@@ -17,6 +17,7 @@ use Voral\BitrixModuleTool\Exception\ExtensionException;
 use Voral\BitrixModuleTool\Exception\InvalidPathException;
 use Voral\BitrixModuleTool\Exception\NotAccessibleException;
 use Voral\BitrixModuleTool\Exception\NoVersionTagException;
+use Voral\BitrixModuleTool\Exception\WrongVersionFileException;
 
 class ModuleListener implements EventListenerInterface
 {
@@ -85,23 +86,34 @@ class ModuleListener implements EventListenerInterface
         return $path . \DIRECTORY_SEPARATOR;
     }
 
+    /**
+     * @throws WrongVersionFileException
+     */
     private function updateModuleVersion(string $version): void
     {
-        $fileName = $this->sourcePath . '/install/version.php';
+        $fileName = $this->sourcePath . 'install/version.php';
         $date = date('Y-m-d');
         if (file_exists($fileName)) {
-            $content = file_get_contents($fileName);
-            if ($content) {
-                $content = (string) preg_replace(
-                    '/[\'"]VERSION[\'"]\s*=>\s*[\'"](.*?)[\'"]/',
-                    '\'VERSION\' => \'' . $version . '\'',
-                    $content,
-                );
-                $content = (string) preg_replace(
-                    '/[\'"]VERSION_DATE[\'"]\s*=>\s*[\'"](.*?)[\'"]/',
-                    '\'VERSION_DATE\' => \'' . $date . '\'',
-                    $content,
-                );
+            $contentOld = file_get_contents($fileName);
+            if (empty($contentOld)) {
+                throw new WrongVersionFileException();
+            }
+
+            $contentVersion = (string) preg_replace(
+                '/[\'"]VERSION[\'"]\s*=>\s*[\'"](.*?)[\'"]/',
+                '\'VERSION\' => \'' . $version . '\'',
+                $contentOld,
+            );
+            if ($contentVersion === $contentOld) {
+                throw new WrongVersionFileException();
+            }
+            $content = (string) preg_replace(
+                '/[\'"]VERSION_DATE[\'"]\s*=>\s*[\'"](.*?)[\'"]/',
+                '\'VERSION_DATE\' => \'' . $date . '\'',
+                $contentVersion,
+            );
+            if ($contentVersion === $content) {
+                throw new WrongVersionFileException();
             }
         } else {
             $content = <<<PHP

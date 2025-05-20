@@ -8,9 +8,9 @@ use PHPUnit\Framework\TestCase;
 use Vasoft\VersionIncrement\Config;
 use Vasoft\VersionIncrement\Contract\VcsExecutorInterface;
 use Vasoft\VersionIncrement\Events\Event;
-use Vasoft\VersionIncrement\SemanticVersionUpdater;
 use Voral\BitrixModuleTool\Exception\ExtensionException;
 use Voral\BitrixModuleTool\Exception\NotAccessibleException;
+use Voral\BitrixModuleTool\Exception\NoVersionTagException;
 use Voral\BitrixModuleTool\ModuleListener;
 
 include_once __DIR__ . '/MockTrait.php';
@@ -82,16 +82,14 @@ final class ModuleListenerTest extends TestCase
         $this->clearMockFileExists([false]);
         $this->clearMockRealPath(['project' => '/home/project'], '');
         $config = new Config();
-        $gitExecutor = self::createMock(VcsExecutorInterface::class);
-        $gitExecutor->expects(self::never())->method('addFile');
-        $gitExecutor->expects(self::never())->method('getFilesSinceTag');
-
         $event = self::createMock(Event::class);
         $event->expects(self::exactly(1))->method('getData')
             ->willReturn(null);
 
         $listener = new ModuleListener($config, 'vendor.test');
+        self::expectException(NoVersionTagException::class);
+        self::expectExceptionMessage('No version tag found.');
+        self::expectExceptionCode(5103);
         $listener->handle($event);
-        self::assertSame(0, self::$mockFileExistsCount);
     }
 }

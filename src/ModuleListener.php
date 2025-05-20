@@ -16,6 +16,7 @@ use Vasoft\VersionIncrement\SemanticVersionUpdater;
 use Voral\BitrixModuleTool\Exception\ExtensionException;
 use Voral\BitrixModuleTool\Exception\InvalidPathException;
 use Voral\BitrixModuleTool\Exception\NotAccessibleException;
+use Voral\BitrixModuleTool\Exception\NoVersionTagException;
 
 class ModuleListener implements EventListenerInterface
 {
@@ -121,11 +122,11 @@ class ModuleListener implements EventListenerInterface
     public function handle(Event $event): void
     {
         /** @var string $lastTag */
-        $lastTag = $event->getData(SemanticVersionUpdater::LAST_VERSION_TAG)??'';
+        $lastTag = $event->getData(SemanticVersionUpdater::LAST_VERSION_TAG) ?? '';
         $lastTag = trim($lastTag);
 
         if (empty($lastTag)) {
-            exit;
+            throw new NoVersionTagException();
         }
         $this->updateModuleVersion($event->version);
         $this->destinationPath .= $event->version . \DIRECTORY_SEPARATOR;

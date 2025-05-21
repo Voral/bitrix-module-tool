@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Voral\BitrixModuleTool\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Vasoft\VersionIncrement\Commits\Commit;
 use Vasoft\VersionIncrement\Commits\CommitCollection;
 use Vasoft\VersionIncrement\Commits\Section;
 use Vasoft\VersionIncrement\Config;
@@ -445,6 +446,244 @@ final class ModuleListenerTest extends TestCase
      * @throws ExtensionException
      * @throws Exception
      *
+     * @covers ::normalizePath
+     * @covers ::writeVersionControl
+     */
+    public function testVersionControl(): void
+    {
+        $sourcePath = '/home/project/src';
+        $destinationPath = '/home/project/dst';
+        $this->clearMockDirName(
+            [$destinationPath . '/install/version.php' => [$destinationPath . 'install']],
+        );
+        $this->clearMockIsDir([$destinationPath . 'install' => false]);
+        $this->clearMockIsFile([$destinationPath . '/install/version.php' => true]);
+
+        $this->clearMockGetEnv(['COMPOSER' => 'project']);
+        $this->clearMockRealPath(['project' => '/home/project'], '');
+        $this->clearMockFileExists([$sourcePath . '/install/version.php' => true]);
+        $this->clearMockFileGetContents([
+            $sourcePath . '/install/version.php' => <<<'PHP'
+                <?php
+                $arModuleVersion = [
+                    'VERSION' => '1.0.0',
+                    'VERSION_DATE' => '2022-01-01',
+                ];
+                PHP,
+        ]);
+        $this->clearMockFilePutContents();
+        $addedFiles = [];
+        $gitExecutor = self::createMock(VcsExecutorInterface::class);
+        $gitExecutor->expects(self::exactly(2))
+            ->method('addFile')
+            ->willReturnCallback(static function (string $fileName) use (&$addedFiles): void {
+                $addedFiles[] = $fileName;
+            });
+        $gitExecutor->expects(self::once())->method('getFilesSinceTag')
+            ->willReturn([]);
+        $config = new Config();
+        $config->setVcsExecutor($gitExecutor);
+
+        $event = $this->getMockBuilder(Event::class)
+            ->setConstructorArgs([EventType::BEFORE_VERSION_SET, '1.1.0'])
+            ->getMock();
+        $event->expects(self::exactly(2))->method('getData')
+            ->willReturnCallback(static function (string $key): mixed {
+                return match ($key) {
+                    SemanticVersionUpdater::LAST_VERSION_TAG => 'v1.0.0',
+                    SemanticVersionUpdater::COMMIT_LIST => self::getCommitCollection(),
+                    default => '',
+                };
+            });
+
+        $listener = new ModuleListener(
+            $config,
+            'vendor.test',
+            sourcePath: 'src',
+            destinationPath: 'dst',
+            modulesVersion: ['main' => '20.0.0', 'sale' => '15.0.0'],
+            lang: [],
+        );
+        $listener->handle($event);
+        self::assertSame([
+            $destinationPath . '/1.1.0/updater1.1.0.php',
+            $destinationPath . '/1.1.0/version_control.txt',
+        ], $addedFiles, 'Wrong files added to git');
+    }
+
+    /**
+     * @throws ApplicationException
+     * @throws ExtensionException
+     * @throws Exception
+     *
+     * @covers ::writeDescription
+     */
+    public function testDescriptionAll(): void
+    {
+        $sourcePath = '/home/project/last_version';
+        $destinationPath = '/home/project/updates';
+        $this->clearMockDirName(
+            [$destinationPath . '/install/version.php' => [$destinationPath . 'install']],
+        );
+        $this->clearMockIsDir([$destinationPath . 'install' => false]);
+        $this->clearMockIsFile([$destinationPath . '/install/version.php' => true]);
+
+        $this->clearMockGetEnv(['COMPOSER' => 'project']);
+        $this->clearMockRealPath(['project' => '/home/project'], '');
+        $this->clearMockFileExists([$sourcePath . '/install/version.php' => true]);
+        $this->clearMockFileGetContents([
+            $sourcePath . '/install/version.php' => <<<'PHP'
+                <?php
+                $arModuleVersion = [
+                    'VERSION' => '1.0.0',
+                    'VERSION_DATE' => '2022-01-01',
+                ];
+                PHP,
+        ]);
+        $this->clearMockFilePutContents();
+        $addedFiles = [];
+        $gitExecutor = self::createMock(VcsExecutorInterface::class);
+        $gitExecutor->expects(self::exactly(3))
+            ->method('addFile')
+            ->willReturnCallback(static function (string $fileName) use (&$addedFiles): void {
+                $addedFiles[] = $fileName;
+            });
+        $gitExecutor->expects(self::once())->method('getFilesSinceTag')
+            ->willReturn([]);
+        $config = new Config();
+        $config->setVcsExecutor($gitExecutor);
+
+        $event = $this->getMockBuilder(Event::class)
+            ->setConstructorArgs([EventType::BEFORE_VERSION_SET, '1.1.0'])
+            ->getMock();
+
+        $commits = self::getCommitCollection();
+        $commits->add(new Commit('feat: Update 1', 'feat', 'Update 1', false));
+        $commits->add(new Commit('feat: Update 2', 'feat', 'Update 2', false));
+        $commits->add(new Commit('fix: Fix', 'fix', 'Fix', false));
+
+        $expectedDescription = <<<'TXT'
+            - Update 1
+            - Update 2
+            - Fix
+
+            TXT;
+
+
+        $event->expects(self::exactly(2))->method('getData')
+            ->willReturnCallback(static function (string $key) use ($commits): mixed {
+                return match ($key) {
+                    SemanticVersionUpdater::LAST_VERSION_TAG => 'v1.0.0',
+                    SemanticVersionUpdater::COMMIT_LIST => $commits,
+                    default => '',
+                };
+            });
+
+        $listener = new ModuleListener($config, 'vendor.test');
+        $listener->handle($event);
+        self::assertSame([
+            $destinationPath . '/1.1.0/updater1.1.0.php',
+            $destinationPath . '/1.1.0/description.ru',
+            $destinationPath . '/1.1.0/description.en',
+        ], $addedFiles, 'Wrong files added to git');
+        self::assertSame(
+            $expectedDescription,
+            self::$mockFilePutContentsContent[$destinationPath . '/1.1.0/description.ru'],
+        );
+        self::assertSame(
+            $expectedDescription,
+            self::$mockFilePutContentsContent[$destinationPath . '/1.1.0/description.en'],
+        );
+    }
+
+    /**
+     * @throws ApplicationException
+     * @throws ExtensionException
+     * @throws Exception
+     *
+     * @covers ::writeDescription
+     */
+    public function testDescriptionFiltered(): void
+    {
+        $sourcePath = '/home/project/last_version';
+        $destinationPath = '/home/project/updates';
+        $this->clearMockDirName(
+            [$destinationPath . '/install/version.php' => [$destinationPath . 'install']],
+        );
+        $this->clearMockIsDir([$destinationPath . 'install' => false]);
+        $this->clearMockIsFile([$destinationPath . '/install/version.php' => true]);
+
+        $this->clearMockGetEnv(['COMPOSER' => 'project']);
+        $this->clearMockRealPath(['project' => '/home/project'], '');
+        $this->clearMockFileExists([$sourcePath . '/install/version.php' => true]);
+        $this->clearMockFileGetContents([
+            $sourcePath . '/install/version.php' => <<<'PHP'
+                <?php
+                $arModuleVersion = [
+                    'VERSION' => '1.0.0',
+                    'VERSION_DATE' => '2022-01-01',
+                ];
+                PHP,
+        ]);
+        $this->clearMockFilePutContents();
+        $addedFiles = [];
+        $gitExecutor = self::createMock(VcsExecutorInterface::class);
+        $gitExecutor->expects(self::exactly(3))
+            ->method('addFile')
+            ->willReturnCallback(static function (string $fileName) use (&$addedFiles): void {
+                $addedFiles[] = $fileName;
+            });
+        $gitExecutor->expects(self::once())->method('getFilesSinceTag')
+            ->willReturn([]);
+        $config = new Config();
+        $config->setVcsExecutor($gitExecutor);
+
+        $event = $this->getMockBuilder(Event::class)
+            ->setConstructorArgs([EventType::BEFORE_VERSION_SET, '1.1.0'])
+            ->getMock();
+
+        $commits = self::getCommitCollection();
+        $commits->add(new Commit('feat: Update 1', 'feat', 'Update 1', false));
+        $commits->add(new Commit('feat: Update 2', 'feat', 'Update 2', false));
+        $commits->add(new Commit('fix: Fix', 'fix', 'Fix', false));
+
+        $expectedDescription = <<<'TXT'
+            - Fix
+
+            TXT;
+
+
+        $event->expects(self::exactly(2))->method('getData')
+            ->willReturnCallback(static function (string $key) use ($commits): mixed {
+                return match ($key) {
+                    SemanticVersionUpdater::LAST_VERSION_TAG => 'v1.0.0',
+                    SemanticVersionUpdater::COMMIT_LIST => $commits,
+                    default => '',
+                };
+            });
+
+        $listener = new ModuleListener($config, 'vendor.test', excludeCommitTypes: ['feat']);
+        $listener->handle($event);
+        self::assertSame([
+            $destinationPath . '/1.1.0/updater1.1.0.php',
+            $destinationPath . '/1.1.0/description.ru',
+            $destinationPath . '/1.1.0/description.en',
+        ], $addedFiles, 'Wrong files added to git');
+        self::assertSame(
+            $expectedDescription,
+            self::$mockFilePutContentsContent[$destinationPath . '/1.1.0/description.ru'],
+        );
+        self::assertSame(
+            $expectedDescription,
+            self::$mockFilePutContentsContent[$destinationPath . '/1.1.0/description.en'],
+        );
+    }
+
+    /**
+     * @throws ApplicationException
+     * @throws ExtensionException
+     * @throws Exception
+     *
      * @covers ::__construct
      * @covers ::getCopyDirectories
      * @covers ::getIncludes
@@ -592,6 +831,7 @@ final class ModuleListenerTest extends TestCase
         $config = new Config();
         $sections = [
             'feat' => new Section('feat', 'Feature', false, [new DefaultRule('feat')], false, false, $config),
+            'fix' => new Section('fix', 'Fix', false, [new DefaultRule('fix')], false, false, $config),
         ];
 
         return new CommitCollection($sections, $sections['feat']);

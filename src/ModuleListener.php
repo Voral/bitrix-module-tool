@@ -220,7 +220,6 @@ class ModuleListener implements EventListenerInterface
             PHP;
         $fileName = $this->destinationPath . 'updater' . $version . '.php';
         file_put_contents($fileName, $content);
-        echo $fileName, PHP_EOL;
         $this->config->getVcsExecutor()->addFile($fileName);
     }
 

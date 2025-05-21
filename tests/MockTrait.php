@@ -36,12 +36,61 @@ trait MockTrait
 
     protected static int $mockFileGetContentsCount = 0;
     protected static array $mockFileGetContentsResult = [];
+    protected static int $mockDirNameCount = 0;
+    protected static array $mockDirNameResult = [];
+    protected static int $mockIsDirCount = 0;
+    protected static array $mockIsDirResult = [];
+    protected static int $mockIsFileCount = 0;
+    protected static array $mockIsFileResult = [];
     private static $failFunction;
+    private static int $mockMkdirCount = 0;
+    private static array $mockMkdirParam = [];
+    private static array $mockMkdirResult = [];
+    private static int $mockCopyCount = 0;
+    private static array $mockCopyParam = [];
 
     protected function initMocks(callable $fail, string $namespace = __NAMESPACE__): void
     {
         if (!$this->initialized) {
             self::$failFunction = $fail;
+            $mockCopy = $this->getFunctionMock($namespace, 'copy');
+            $mockCopy->expects(TestCase::any())->willReturnCallback(static function ($from, $to): bool {
+                ++self::$mockCopyCount;
+                self::$mockCopyParam[$from] = $to;
+
+                return true;
+            });
+
+            $mockMkdir = $this->getFunctionMock($namespace, 'mkdir');
+            $mockMkdir->expects(TestCase::any())->willReturnCallback(static function ($path, $perms, $recursive): bool {
+                ++self::$mockMkdirCount;
+                self::$mockMkdirParam[$path] = [$perms, $recursive];
+
+                return self::$mockMkdirResult[$path] ?? false;
+            });
+
+            $mockIsFile = $this->getFunctionMock($namespace, 'is_file');
+            $mockIsFile->expects(TestCase::any())->willReturnCallback(static function ($path): bool {
+                ++self::$mockIsFileCount;
+
+                return self::$mockIsFileResult[$path] ?? false;
+            });
+
+            $mockIsDir = $this->getFunctionMock($namespace, 'is_dir');
+            $mockIsDir->expects(TestCase::any())->willReturnCallback(static function ($path): bool {
+                ++self::$mockIsDirCount;
+
+                return self::$mockIsDirResult[$path] ?? false;
+            });
+
+            $mockDirName = $this->getFunctionMock($namespace, 'dirname');
+            $mockDirName->expects(TestCase::any())->willReturnCallback(static function ($path): string {
+                ++self::$mockDirNameCount;
+
+                return self::$mockDirNameResult[$path] ?? '';
+            });
+
+
             $mockGetCwd = $this->getFunctionMock($namespace, 'getcwd');
             $mockGetCwd->expects(TestCase::any())->willReturnCallback(static function (): bool|string {
                 if ('' !== self::$mockGetCwdFailMessage) {
@@ -63,14 +112,14 @@ trait MockTrait
                 self::$mockFileExistsParam[] = $file;
                 ++self::$mockFileExistsCount;
 
-                return self::$mockFileExistsResult[$file];
+                return self::$mockFileExistsResult[$file] ?? false;
             });
             $mockFilePutContents = $this->getFunctionMock($namespace, 'file_put_contents');
             $mockFilePutContents->expects(TestCase::any())->willReturnCallback(
                 static function ($file, string $content): int {
                     ++self::$mockFilePutContentsCount;
                     self::$mockFilePutContentsParam[] = $file;
-                    self::$mockFilePutContentsContent[] = $content;
+                    self::$mockFilePutContentsContent[$file] = $content;
 
                     return strlen($content);
                 },
@@ -137,5 +186,36 @@ trait MockTrait
         self::$mockRealPathParam = [];
         self::$mockRealPathCount = 0;
         self::$mockRealPathResult = $result;
+    }
+
+    protected function clearMockDirName(array $result): void
+    {
+        self::$mockDirNameCount = 0;
+        self::$mockDirNameResult = $result;
+    }
+
+    protected function clearMockIsDir(array $result): void
+    {
+        self::$mockIsDirCount = 0;
+        self::$mockIsDirResult = $result;
+    }
+
+    protected function clearMockIsFile(array $result): void
+    {
+        self::$mockIsFileCount = 0;
+        self::$mockIsFileResult = $result;
+    }
+
+    protected function clearMockMkdir(array $result): void
+    {
+        self::$mockMkdirCount = 0;
+        self::$mockMkdirParam = [];
+        self::$mockMkdirResult = $result;
+    }
+
+    protected function clearMockCopy(): void
+    {
+        self::$mockCopyCount = 0;
+        self::$mockCopyParam = [];
     }
 }

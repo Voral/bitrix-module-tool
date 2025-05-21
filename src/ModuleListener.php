@@ -78,7 +78,7 @@ class ModuleListener implements EventListenerInterface
 
     private function normalizePath(string $path): string
     {
-        $path = rtrim(trim($path), "\\/");
+        $path = rtrim(trim($path), '\\/');
         if (!str_starts_with($path, \DIRECTORY_SEPARATOR)) {
             $path = $this->projectPath . $path;
         }
@@ -239,7 +239,7 @@ class ModuleListener implements EventListenerInterface
 
         return <<<PHP
             if(IsModuleInstalled('{$this->moduleId}')){
-                $copyDirectories
+                {$copyDirectories}
             }
             PHP;
     }

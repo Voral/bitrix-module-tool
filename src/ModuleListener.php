@@ -78,7 +78,7 @@ class ModuleListener implements EventListenerInterface
 
     private function normalizePath(string $path): string
     {
-        $path = rtrim($path, " \t\n\r\0\x0B\\/");
+        $path = rtrim(trim($path), "\\/");
         if (!str_starts_with($path, \DIRECTORY_SEPARATOR)) {
             $path = $this->projectPath . $path;
         }
@@ -115,6 +115,7 @@ class ModuleListener implements EventListenerInterface
             if ($contentVersion === $content) {
                 throw new WrongVersionFileException();
             }
+            $needAdd = false;
         } else {
             $content = <<<PHP
                 <?php
@@ -127,8 +128,12 @@ class ModuleListener implements EventListenerInterface
                 ];
 
                 PHP;
+            $needAdd = true;
         }
         file_put_contents($fileName, $content);
+        if ($needAdd) {
+            $this->config->getVcsExecutor()->addFile($fileName);
+        }
     }
 
     public function handle(Event $event): void
@@ -198,7 +203,7 @@ class ModuleListener implements EventListenerInterface
     private function writeUpdater(array $remove, string $version): void
     {
         $delete = $this->getRemoveFiles($remove);
-        $copyDirectories = $this->getCopyDirectories();
+        $moduleRelated = $this->getModuleRelated();
         $versionPhp = $this->controlPhpVersion();
 
         $content = <<<PHP
@@ -210,14 +215,46 @@ class ModuleListener implements EventListenerInterface
             * @var CUpdater \$updater
             */
 
-            {$versionPhp}
-            {$delete}
-            {$copyDirectories}
+            {$versionPhp}{$delete}{$moduleRelated}
 
             PHP;
         $fileName = $this->destinationPath . 'updater' . $version . '.php';
         file_put_contents($fileName, $content);
+        echo $fileName, PHP_EOL;
         $this->config->getVcsExecutor()->addFile($fileName);
+    }
+
+    private function getModuleRelated(): string
+    {
+        $copyDirectories = $this->getCopyDirectories();
+        $includes = $this->getIncludes();
+        if (empty($includes) && empty($copyDirectories)) {
+            return '';
+        }
+
+        if (!empty($copyDirectories)) {
+            $copyDirectories .= PHP_EOL;
+        }
+        $copyDirectories .= $includes;
+
+        return <<<PHP
+            if(IsModuleInstalled('{$this->moduleId}')){
+                $copyDirectories
+            }
+            PHP;
+    }
+
+    private function getIncludes(): string
+    {
+        $contents = '';
+        if ('' !== $this->includePhpFile && file_exists($this->includePhpFile)) {
+            $code = file_get_contents($this->includePhpFile);
+            if ($code) {
+                $contents = trim((string) preg_replace('/<\?(php)?/', '', $code));
+            }
+        }
+
+        return $contents;
     }
 
     private function controlPhpVersion(): string
@@ -238,7 +275,7 @@ class ModuleListener implements EventListenerInterface
 
     private function getCopyDirectories(): string
     {
-        $directory = $this->sourcePath . 'install';
+        $directory = $this->destinationPath . 'install';
         if (!is_dir($directory)) {
             return '';
         }
@@ -266,6 +303,9 @@ class ModuleListener implements EventListenerInterface
                 $code = trim((string) preg_replace('/<\?(php)?/', '', $code));
                 $contents .= PHP_EOL . PHP_EOL . $code;
             }
+        }
+        if (empty($contents)) {
+            return '';
         }
 
         return <<<PHP

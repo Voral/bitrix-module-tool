@@ -766,6 +766,93 @@ final class ModuleListenerTest extends TestCase
      * @throws ExtensionException
      * @throws Exception
      *
+     * @covers ::__construct
+     * @covers ::getCopyDirectories
+     * @covers ::getIncludes
+     * @covers ::getModuleRelated
+     * @covers ::writeDescription
+     * @covers ::controlPhpVersion
+     */
+    public function testPhpVersion(): void
+    {
+        $this->clearMockDirName(
+            ['/home/project/last_version/install/version.php' => '/home/project/last_version/install'],
+        );
+        $this->clearMockIsDir(['/home/project/updates/1.1.0/install' => false]);
+        $this->clearMockIsFile(['/home/project/last_version/install/version.php' => true]);
+
+        $this->clearMockGetEnv(['COMPOSER' => 'project']);
+        $this->clearMockRealPath(['project' => '/home/project'], '');
+        $this->clearMockFileExists([
+            '/home/project/last_version/install/version.php' => true,
+            'file.php' => true,
+        ]);
+        $this->clearMockFileGetContents([
+            'file.php' => '<?php echo "123";',
+            '/home/project/last_version/install/version.php' => <<<'PHP'
+                <?php
+                $arModuleVersion = [
+                    'VERSION' => '1.0.0',
+                    'VERSION_DATE' => '2022-01-01',
+                ];
+                PHP,
+        ]);
+        $this->clearMockFilePutContents();
+        $addedFiles = [];
+        $gitExecutor = self::createMock(VcsExecutorInterface::class);
+        $gitExecutor->expects(self::exactly(1))
+            ->method('addFile')
+            ->willReturnCallback(static function (string $fileName) use (&$addedFiles): void {
+                $addedFiles[] = $fileName;
+            });
+        $gitExecutor->expects(self::once())->method('getFilesSinceTag')
+            ->willReturn([]);
+        $config = new Config();
+        $config->setVcsExecutor($gitExecutor);
+
+        $event = $this->getMockBuilder(Event::class)
+            ->setConstructorArgs([EventType::BEFORE_VERSION_SET, '1.1.0'])
+            ->getMock();
+        $event->expects(self::exactly(2))->method('getData')
+            ->willReturnCallback(static function (string $key): mixed {
+                return match ($key) {
+                    SemanticVersionUpdater::LAST_VERSION_TAG => 'v1.0.0',
+                    SemanticVersionUpdater::COMMIT_LIST => self::getCommitCollection(),
+                    default => '',
+                };
+            });
+
+        $listener = new ModuleListener($config, 'vendor.test', lang: [], includePhpFile: 'file.php',phpVersion: '7.4');
+        $listener->handle($event);
+        self::assertSame(
+            <<<'PHP'
+                <?php
+
+                declare(strict_types=1);
+
+                /**
+                * @var CUpdater $updater
+                */
+
+                if (!version_compare(PHP_VERSION, '7.4', '>=')) {
+                    $updater->errorMessage[] = 'Requires PHP version 7.4 and higher';
+                    return;
+                }
+                if(IsModuleInstalled('vendor.test')){
+                    echo "123";
+                }
+
+                PHP,
+            self::$mockFilePutContentsContent['/home/project/updates/1.1.0/updater1.1.0.php'],
+            'Wrong updater file content',
+        );
+    }
+
+    /**
+     * @throws ApplicationException
+     * @throws ExtensionException
+     * @throws Exception
+     *
      * @covers ::writeDescription
      * @covers ::writeVersionControl
      */

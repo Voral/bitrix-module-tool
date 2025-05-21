@@ -263,7 +263,6 @@ class ModuleListener implements EventListenerInterface
         }
 
         return <<<PHP
-
             if (!version_compare(PHP_VERSION, '{$this->phpVersion}', '>=')) {
                 \$updater->errorMessage[] = 'Requires PHP version {$this->phpVersion} and higher';
                 return;

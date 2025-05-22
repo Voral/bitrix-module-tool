@@ -92,6 +92,7 @@ class ModuleListener implements EventListenerInterface
     }
 
     /**
+     * @throws GitCommandException
      * @throws WrongVersionFileException
      */
     private function updateModuleVersion(string $version): void
@@ -299,13 +300,6 @@ class ModuleListener implements EventListenerInterface
         $contents = implode("\n", $commands);
         if ($adminExists) {
             $contents .= $this->getCopyAdminPages();
-        }
-        if ('' !== $this->includePhpFile && file_exists($this->includePhpFile)) {
-            $code = file_get_contents($this->includePhpFile);
-            if ($code) {
-                $code = trim((string) preg_replace('/<\?(php)?/', '', $code));
-                $contents .= PHP_EOL . PHP_EOL . $code;
-            }
         }
         if (empty($contents)) {
             return '';

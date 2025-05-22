@@ -17,6 +17,7 @@ use Voral\BitrixModuleTool\Exception\ExtensionException;
 use Voral\BitrixModuleTool\Exception\InvalidPathException;
 use Voral\BitrixModuleTool\Exception\NotAccessibleException;
 use Voral\BitrixModuleTool\Exception\NoVersionTagException;
+use Voral\BitrixModuleTool\Exception\WrongPathException;
 use Voral\BitrixModuleTool\Exception\WrongVersionFileException;
 
 class ModuleListener implements EventListenerInterface
@@ -28,8 +29,8 @@ class ModuleListener implements EventListenerInterface
     /**
      * @param Config               $config             Конфигурация version-increment
      * @param string               $moduleId           Идентификатор модуля
-     * @param string               $sourcePath         Каталог с исходниками модуля
-     * @param string               $destinationPath    Путь для файлов обновлений
+     * @param string               $sourcePath         Каталог с исходниками модуля, относительно корня проекта
+     * @param string               $destinationPath    Путь для файлов обновлений, относительно корня проекта
      * @param string               $phpVersion         Версия PHP если необходим контроль в скрипте обновления
      * @param array<string,string> $modulesVersion     Требующиеся модули и их версии
      * @param array<string>        $excludeCommitTypes Типы коммитов не включаемые в файлы описания обновлений
@@ -50,8 +51,8 @@ class ModuleListener implements EventListenerInterface
         private readonly string $includePhpFile = '',
     ) {
         $this->projectPath = $this->getProjectPath();
-        $this->sourcePath = $this->normalizePath($sourcePath);
-        $this->destinationPath = $this->normalizePath($destinationPath);
+        $this->sourcePath = $this->normalizePath($sourcePath, 'sourcePath');
+        $this->destinationPath = $this->normalizePath($destinationPath, 'destinationPath');
     }
 
     /**
@@ -76,14 +77,18 @@ class ModuleListener implements EventListenerInterface
         return $pathReal . \DIRECTORY_SEPARATOR;
     }
 
-    private function normalizePath(string $path): string
+    /**
+     * @throws WrongPathException
+     */
+    private function normalizePath(string $path, string $name): string
     {
-        $path = rtrim(trim($path), '\\/');
-        if (!str_starts_with($path, \DIRECTORY_SEPARATOR)) {
-            $path = $this->projectPath . $path;
+        $path = rtrim(trim($path), '\/');
+        $result = $this->projectPath . $path;
+        if (str_starts_with($path, \DIRECTORY_SEPARATOR) || !file_exists($result)) {
+            throw  new WrongPathException($name);
         }
 
-        return $path . \DIRECTORY_SEPARATOR;
+        return $result . \DIRECTORY_SEPARATOR;
     }
 
     /**
@@ -288,7 +293,7 @@ class ModuleListener implements EventListenerInterface
 
                     continue;
                 }
-                $commands[] = "    \$updater->CopyFiles('install/{$fileInfo->getFilename()}', '{$fileInfo->getFilename()}');";
+                $commands[] = "\$updater->CopyFiles('install/{$fileInfo->getFilename()}', '{$fileInfo->getFilename()}');";
             }
         }
         $contents = implode("\n", $commands);
@@ -306,13 +311,7 @@ class ModuleListener implements EventListenerInterface
             return '';
         }
 
-        return <<<PHP
-
-            if(IsModuleInstalled('{$this->moduleId}')){
-            {$contents}
-            }
-
-            PHP;
+        return $contents;
     }
 
     private function formatVarExport(mixed $value): string
@@ -324,7 +323,7 @@ class ModuleListener implements EventListenerInterface
 
     private function getCopyAdminPages(): string
     {
-        $directory = $this->sourcePath . 'install/admin/';
+        $directory = $this->destinationPath . 'install/admin/';
         $iterator = new \DirectoryIterator($directory);
         $files = [];
         foreach ($iterator as $fileInfo) {
@@ -341,8 +340,8 @@ class ModuleListener implements EventListenerInterface
                 \$adminFiles = {$fileList};
                 foreach (\$adminFiles as \$file) {
                     file_put_contents(
-                        \$_SERVER["DOCUMENT_ROOT"].\$updater->kernelPath . '/admin/{$modulePrefix}' . \$file,
-                        '<?php require(\$_SERVER["DOCUMENT_ROOT"].\\'{$path}'.\$file.'\\');',
+                        \$_SERVER["DOCUMENT_ROOT"] . \$updater->kernelPath . '/admin/{$modulePrefix}' . \$file,
+                        '<?php require(\$_SERVER["DOCUMENT_ROOT"] . '{$path}' . \$file . '\\');',
                     );
                 }
             PHP;
@@ -459,7 +458,9 @@ class ModuleListener implements EventListenerInterface
     {
         $files = array_unique($files);
         foreach ($files as &$file) {
-            $file = $this->projectPath . $file;
+            if (!str_starts_with($file, \DIRECTORY_SEPARATOR)) {
+                $file = $this->projectPath . $file;
+            }
         }
 
         return $files;

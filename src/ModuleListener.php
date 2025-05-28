@@ -335,7 +335,7 @@ class ModuleListener implements EventListenerInterface
                 foreach (\$adminFiles as \$file) {
                     file_put_contents(
                         \$_SERVER["DOCUMENT_ROOT"] . \$updater->kernelPath . '/admin/{$modulePrefix}' . \$file,
-                        '<?php require(\$_SERVER["DOCUMENT_ROOT"] . '{$path}' . \$file . '\\');',
+                        '<?php require(\$_SERVER["DOCUMENT_ROOT"] . "{$path}' . \$file . '");',
                     );
                 }
             PHP;

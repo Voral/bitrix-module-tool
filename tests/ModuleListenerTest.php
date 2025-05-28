@@ -1170,7 +1170,7 @@ final class ModuleListenerTest extends TestCase
                     foreach ($adminFiles as $file) {
                         file_put_contents(
                             $_SERVER["DOCUMENT_ROOT"] . $updater->kernelPath . '/admin/vendor_test_' . $file,
-                            '<?php require($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/vendor.test/install/admin/' . $file . '\');',
+                            '<?php require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/vendor.test/install/admin/' . $file . '");',
                         );
                     }
 

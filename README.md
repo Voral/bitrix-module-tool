@@ -127,6 +127,44 @@ return $config;
 
 ```
 
+
+| Код  | Описание                                                     |
+|------|--------------------------------------------------------------|
+| 5101 | Нет доступа к каталогу проекта                               |
+| 5102 | Не корректный путь к проекту                                 |
+| 5103 | Не найден git тег версии                                     |
+| 5104 | Отсутствует или не верный формат файла version.php           |
+| 5105 | Не корректно задан путь к каталогу исходников или обновлений |
+
+Чтобы избежать конфликты с прочими расширениями пакета voral/vs-version-incrementor можно изменять коды ошибок. Для этого необходимо задать дельту. В приведенном ниже примере коды ошибок будут увеличены на 100
+
+```php
+use Vasoft\VersionIncrement\Config;
+use Vasoft\VersionIncrement\Events\EventType;
+use Voral\BitrixModuleTool\ModuleListener;
+use Voral\BitrixModuleTool\Exception\ExtensionException;
+
+ExtensionException::$errorCodeDelta = 100;
+$config = new Config();
+
+$eventBus = $config->getEventBus();
+$listener = new ModuleListener($config, 'vendor.module');
+$eventBus->addListener(EventType::BEFORE_VERSION_SET, $listener);
+// прочие настройки
+
+return $config;
+```
+
+## Пример файла install/version.php
+
+```php
+<?php
+$arModuleVersion = [
+    'VERSION' => '1.0.0',
+    'VERSION_DATE' => '2023-01-01'
+];
+```
+
 ## Лицензия
 
 MIT License. Подробности в файле [LICENSE](LICENSE.md).

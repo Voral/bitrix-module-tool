@@ -5,3 +5,5 @@
 /.gitignore export-ignore
 /composer.lock export-ignore
 /.github export-ignore
+/doc export-ignore
+/CHANGELOG.md export-ignore

@@ -42,7 +42,7 @@ class ModuleListener implements EventListenerInterface
     public function __construct(
         private readonly Config $config,
         private readonly string $moduleId,
-        string $sourcePath = 'last_version',
+        string $sourcePath = 'src',
         string $destinationPath = 'updates',
         private readonly string $phpVersion = '',
         private readonly array $modulesVersion = [],

@@ -45,7 +45,7 @@ final class ModuleListenerTest extends TestCase
 
     private static string $proDir = __DIR__ . '/fake';
     private static string $dstDir = __DIR__ . '/fake/updates';
-    private static string $srcDir = __DIR__ . '/fake/last_version';
+    private static string $srcDir = __DIR__ . '/fake/src';
 
     public static function setUpBeforeClass(): void
     {
@@ -563,7 +563,7 @@ final class ModuleListenerTest extends TestCase
         $listener = new ModuleListener(
             $config,
             'vendor.test',
-            sourcePath: 'last_version_alt',
+            sourcePath: 'src_alt',
             destinationPath: 'updates_alt',
             lang: [],
         );
@@ -1185,13 +1185,13 @@ final class ModuleListenerTest extends TestCase
     private function getChangedFiles(string $path): array
     {
         return [
-            new ModifiedFile(FileModifyType::ADD, 'last_version/install/version.php', ''),
-            new ModifiedFile(FileModifyType::DELETE, 'last_version/install/test.php', ''),
-            new ModifiedFile(FileModifyType::MODIFY, 'last_version/lib/test.php', ''),
-            new ModifiedFile(FileModifyType::RENAME, 'last_version/lib/test-old.php', 'last_version/lib/test-new.php'),
-            new ModifiedFile(FileModifyType::COPY, 'last_version/lib/test1.php', 'last_version/lib/test2.php'),
-            new ModifiedFile(FileModifyType::DELETE, 'last_version/lib/a.php', ''),
-            new ModifiedFile(FileModifyType::ADD, 'last_version/lib/a.php', ''),
+            new ModifiedFile(FileModifyType::ADD, 'src/install/version.php', ''),
+            new ModifiedFile(FileModifyType::DELETE, 'src/install/test.php', ''),
+            new ModifiedFile(FileModifyType::MODIFY, 'src/lib/test.php', ''),
+            new ModifiedFile(FileModifyType::RENAME, 'src/lib/test-old.php', 'src/lib/test-new.php'),
+            new ModifiedFile(FileModifyType::COPY, 'src/lib/test1.php', 'src/lib/test2.php'),
+            new ModifiedFile(FileModifyType::DELETE, 'src/lib/a.php', ''),
+            new ModifiedFile(FileModifyType::ADD, 'src/lib/a.php', ''),
         ];
     }
 

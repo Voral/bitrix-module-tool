@@ -1,13 +1,13 @@
 # Сборка пакета обновления модуля Битрикс
 
-Расширение для пакета [voral/vs-version-incrementor](https://github.com/Voral/vs-version-incrementor) автоматизирующее пакетов обновления модулей для Битрикс-маркетплейс на основе анализа git коммитов и семантического обновления версии. А так же изменяющее номер версии в файле version.php
+Расширение для пакета [voral/version-increment](https://github.com/Voral/vs-version-incrementor) автоматизирующее пакетов обновления модулей для Битрикс-маркетплейс на основе анализа git коммитов и семантического обновления версии. А так же изменяющее номер версии в файле version.php
 
 # Bitrix Module Update Builder
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/voral/bitrix-module-tool )](https://packagist.org/packages/voral/bitrix-module-tool )  
 
 ## Основные функции
 
-При вычислении новой версии утилитой voral/vs-version-incrementor перед коммитом выполняются следующие этапы по сборке обновления версии:
+При вычислении новой версии утилитой voral/version-increment перед коммитом выполняются следующие этапы по сборке обновления версии:
 
 1. Изменение версии модуля в соответствии с обновлением в файле install/version.php. А так же даты версии модуля на текущую. Если это файла нет в модуле - он будет создан.
 2. На основе анализа коммитов выполненных с предыдущей версии копируются новые и измененные файлы модуля в каталог пакета обновления. Кроме того, при необходимости, добавляется код удаления файлов, которые были удалены из модуля в скрипт обновления `updater.php`
@@ -33,7 +33,7 @@
 composer require -dev voral/bitrix-module-tool
 ```
 
-Если у вас до этого не был установлен пакет [voral/vs-version-incrementor](https://github.com/Voral/vs-version-incrementor)  - он будет установлен и необходимо будет произвести настройку согласно документации. А так же подключить данный пакет в файле `.vs-version-increment.php`
+Если у вас до этого не был установлен пакет [voral/version-increment](https://github.com/Voral/vs-version-incrementor)  - он будет установлен и необходимо будет произвести настройку согласно документации. А так же подключить данный пакет в файле `.vs-version-increment.php`
 
 ```php
 use Vasoft\VersionIncrement\Config;

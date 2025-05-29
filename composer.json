@@ -44,7 +44,7 @@
     }
   },
   "scripts": {
-    "vi": "php ./vendor/bin/vs-version-increment",
+    "vi:auto": "php ./vendor/bin/vs-version-increment",
     "vi:debug": "php ./vendor/bin/vs-version-increment --debug",
     "test": "php vendor/bin/phpunit --display-warnings",
     "stan": "vendor/bin/phpstan analyse src tests",
@@ -55,7 +55,7 @@
     ]
   },
   "scripts-descriptions": {
-    "vi": "Run the version increment tool in automatic mode.",
+    "vi:auto": "Run the version increment tool in automatic mode.",
     "vi:debug": "Run the version increment tool in debug mode to preview changes without applying them.",
     "test": "Run PHPUnit tests with warnings displayed.",
     "stan": "Run PHPStan static analysis on the 'src' and 'tests' directories.",

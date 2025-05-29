@@ -2,7 +2,6 @@
 
 Расширение для пакета [voral/version-increment](https://github.com/Voral/vs-version-incrementor) автоматизирующее пакетов обновления модулей для Битрикс-маркетплейс на основе анализа git коммитов и семантического обновления версии. А так же изменяющее номер версии в файле version.php
 
-# Bitrix Module Update Builder
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/voral/bitrix-module-tool )](https://packagist.org/packages/voral/bitrix-module-tool )  
 
 ## Основные функции

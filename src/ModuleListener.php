@@ -224,7 +224,7 @@ class ModuleListener implements EventListenerInterface
             {$versionPhp}{$delete}{$moduleRelated}
 
             PHP;
-        $fileName = $this->destinationPath . 'updater' . $version . '.php';
+        $fileName = $this->destinationPath . 'updater.php';
         file_put_contents($fileName, $content);
         $this->config->getVcsExecutor()->addFile($fileName);
     }

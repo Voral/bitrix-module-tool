@@ -402,7 +402,7 @@ final class ModuleListenerTest extends TestCase
         );
 
         self::assertSame([
-            self::$dstDir . '/1.1.0/updater1.1.0.php',
+            self::$dstDir . '/1.1.0/updater.php',
             self::$dstDir . '/1.1.0/description.ru',
             self::$dstDir . '/1.1.0/description.en',
         ], $addedFiles, 'Wrong files added to git');
@@ -419,7 +419,7 @@ final class ModuleListenerTest extends TestCase
 
 
                 PHP,
-            self::$mockFilePutContentsContent[self::$dstDir . '/1.1.0/updater1.1.0.php'],
+            self::$mockFilePutContentsContent[self::$dstDir . '/1.1.0/updater.php'],
             'Wrong updater file content',
         );
         self::assertSame('', self::$mockFilePutContentsContent[self::$dstDir . '/1.1.0/description.ru']);
@@ -496,7 +496,7 @@ final class ModuleListenerTest extends TestCase
         );
         self::assertSame([
             self::$srcDir . '/install/version.php',
-            self::$dstDir . '/1.1.0/updater1.1.0.php',
+            self::$dstDir . '/1.1.0/updater.php',
             self::$dstDir . '/1.1.0/description.ru',
             self::$dstDir . '/1.1.0/description.en',
         ], $addedFiles, 'Wrong files added to git');
@@ -569,7 +569,7 @@ final class ModuleListenerTest extends TestCase
         );
         $listener->handle($event);
         self::assertSame([
-            $destinationPath . '/1.1.0/updater1.1.0.php',
+            $destinationPath . '/1.1.0/updater.php',
         ], $addedFiles, 'Wrong files added to git');
     }
 
@@ -635,7 +635,7 @@ final class ModuleListenerTest extends TestCase
         );
         $listener->handle($event);
         self::assertSame([
-            self::$dstDir . '/1.1.0/updater1.1.0.php',
+            self::$dstDir . '/1.1.0/updater.php',
             self::$dstDir . '/1.1.0/version_control.txt',
         ], $addedFiles, 'Wrong files added to git');
     }
@@ -713,7 +713,7 @@ final class ModuleListenerTest extends TestCase
         $listener = new ModuleListener($config, 'vendor.test');
         $listener->handle($event);
         self::assertSame([
-            self::$dstDir . '/1.1.0/updater1.1.0.php',
+            self::$dstDir . '/1.1.0/updater.php',
             self::$dstDir . '/1.1.0/description.ru',
             self::$dstDir . '/1.1.0/description.en',
         ], $addedFiles, 'Wrong files added to git');
@@ -795,7 +795,7 @@ final class ModuleListenerTest extends TestCase
         $listener = new ModuleListener($config, 'vendor.test', excludeCommitTypes: ['feat']);
         $listener->handle($event);
         self::assertSame([
-            self::$dstDir . '/1.1.0/updater1.1.0.php',
+            self::$dstDir . '/1.1.0/updater.php',
             self::$dstDir . '/1.1.0/description.ru',
             self::$dstDir . '/1.1.0/description.en',
         ], $addedFiles, 'Wrong files added to git');
@@ -889,7 +889,7 @@ final class ModuleListenerTest extends TestCase
                 }
 
                 PHP,
-            self::$mockFilePutContentsContent[self::$dstDir . '/1.1.0/updater1.1.0.php'],
+            self::$mockFilePutContentsContent[self::$dstDir . '/1.1.0/updater.php'],
             'Wrong updater file content',
         );
     }
@@ -975,7 +975,7 @@ final class ModuleListenerTest extends TestCase
                 }
 
                 PHP,
-            self::$mockFilePutContentsContent[self::$dstDir . '/1.1.0/updater1.1.0.php'],
+            self::$mockFilePutContentsContent[self::$dstDir . '/1.1.0/updater.php'],
             'Wrong updater file content',
         );
     }
@@ -1038,7 +1038,7 @@ final class ModuleListenerTest extends TestCase
         $listener = new ModuleListener($config, 'vendor.test', lang: ['ru', 'en', 'fr']);
         $listener->handle($event);
         self::assertSame([
-            self::$dstDir . '/1.1.0/updater1.1.0.php',
+            self::$dstDir . '/1.1.0/updater.php',
             self::$dstDir . '/1.1.0/description.ru',
             self::$dstDir . '/1.1.0/description.en',
             self::$dstDir . '/1.1.0/description.fr',
@@ -1177,7 +1177,7 @@ final class ModuleListenerTest extends TestCase
                 }
 
                 PHP,
-            self::$mockFilePutContentsContent[self::$dstDir . '/1.1.0/updater1.1.0.php'],
+            self::$mockFilePutContentsContent[self::$dstDir . '/1.1.0/updater.php'],
             'Wrong updater file content',
         );
     }

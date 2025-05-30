@@ -62,5 +62,5 @@
         "fixer": "Check coding standards using PHP-CS-Fixer (dry-run mode).",
         "checkit": "Run all checks, including coding standards and static analysis."
     },
-    "version": "1.0.0"
+    "version": "1.0.1"
 }

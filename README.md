@@ -24,7 +24,7 @@
 - Git установлен и доступен в CLI
 - Composer для управления зависимостями
 
-## Как пользоваться
+## Подготовка
 
 Для начала необходимо установить пакет
 
@@ -60,19 +60,48 @@ return $config;
 php ./vendor/bin/vs-version-increment --no-commit
 ```
 
-Удобно записать этот скрипт в composer.json
+Удобно записать этот скрипт в composer.json. Так же необходимо добавить скрипты создания пакетов модуля (обновления и полного) для загрузки на маркетплейс
+
 ```json
 {
    "scripts": {
-      "vi:auto": "php ./vendor/bin/vs-version-increment --no-commit"
+      "vi:auto": "php ./vendor/bin/vs-version-increment --no-commit",
+      "pack:last": "sh scripts/pack-last.sh",
+      "pack:ver": "sh scripts/pack-version.sh",
+      "pack": [
+         "@pack:ver",
+         "@pack:last"
+      ]
    },
    "scripts-descriptions": {
-      "vi:auto": "Increment module version and generate update package"
+      "vi:auto": "Increment module version and generate update package",
+      "pack:last": "Pack the full package of the module's latest version",
+      "pack:ver": "Pack the update package for a specified module version",
+      "pack": "Pack the full package of the latest version and the update package for a specified version"
    }
 }
 ```
 
-После выполнения скрипта произведите необходимую корректировку собранного обновления, упакуйте и загружайте на маркетплейс Битрикс.
+## Применение
+
+1. После выполнения изменений в модуле выполните расчет версии. Ппо окончанию этого скрипта в консоль будут выведены рекомендуемые команды для выполнения коммита и установки тега. Они будут содержать новую версию пакета.
+   ```bash
+   composer vi:auto
+   ```
+
+2. При необходимости внесите изменения в CHANGELOG.md, в так же сгенерированные файлы описания обновления /updates/<версия_пакета>/description.*
+
+3. Выполните сборку пакета обновлений для полученной версии (например для версии 1.3.0)
+   ```bash
+   composer pack:last 1.3.0
+   ```
+4. Выполните проверку пакета обновлений как описано в [статье](doc/check_update.md)
+5. После всех проверок выполните сборку пакетов обновления и полного пакета модуля
+   ```bash
+   composer pack:pack 1.3.0
+   ```
+6. Выполните коммит релиза и установите так как рекомендовано на шаге 1
+7. Загрузить пакет на Битрикс маркетплейс
 
 ## Конфигурация
 

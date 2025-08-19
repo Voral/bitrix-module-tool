@@ -325,6 +325,7 @@ class ModuleListener implements EventListenerInterface
                 $files[] = $fileInfo->getFilename();
             }
         }
+        sort($files);
         $fileList = $this->formatVarExport($files);
         $modulePrefix = str_replace('.', '_', $this->moduleId) . '_';
         $path = "/bitrix/modules/{$this->moduleId}/install/admin/";
